@@ -16,7 +16,6 @@ export class PostResolver {
     @Arg('id') id: number,
     // context is my mikro orm shit
     @Ctx() { em }: MyContext
-    // this query returns a promise here
   ): Promise<Post | null> {
     // do stuff here
     return em.findOne(Post, { id });
@@ -28,8 +27,8 @@ export class PostResolver {
     @Arg('title') title: string,
     @Ctx() { em }: MyContext
   ): Promise<Post> {
-    const post = em.create(Post, { title })
-    await em.persistAndFlush(post)
+    const post = em.create(Post, { title });
+    await em.persistAndFlush(post);
     return post;
   }
 
@@ -37,10 +36,13 @@ export class PostResolver {
   @Mutation(() => Post, { nullable: true })
   async updatePost(
     @Arg('id') id: number,
+
+    // the @Arg type must be set (() => String) here to pass nullable in
+    // also the @Arg type is usually inferred, but if not, just pass it in as a 2nd param to Arg
     @Arg('title', () => String, { nullable: true }) title: string,
     @Ctx() { em }: MyContext
   ): Promise<Post | null> {
-    const post = await em.findOne(Post, { id })
+    const post = await em.findOne(Post, { id });
     if (!post) {
       return null;
     }
@@ -57,7 +59,7 @@ export class PostResolver {
     @Arg('id') id: number,
     @Ctx() { em }: MyContext
   ): Promise<boolean> {
-    await em.nativeDelete(Post, { id })
+    await em.nativeDelete(Post, { id });
     return true;
   }
 }
