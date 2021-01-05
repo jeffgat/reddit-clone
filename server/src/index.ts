@@ -8,6 +8,7 @@ import { buildSchema } from 'type-graphql';
 import { HelloResolver } from './resolvers/hello';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
+import cors from 'cors';
 
 import redis from 'redis';
 import session from 'express-session';
@@ -23,6 +24,12 @@ const main = async () => {
   const RedisStore = connectRedis(session);
   const redisClient = redis.createClient();
 
+  app.use(
+    cors({
+      origin: 'http://localhost:3000',
+      credentials: true,
+    })
+  );
   app.use(
     session({
       name: 'qid',
@@ -52,7 +59,10 @@ const main = async () => {
     context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
   });
 
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  });
 
   // if you ignore a variable you make it an underscore, (in this case the req in (req, res))
   app.get('/', (_, res) => {

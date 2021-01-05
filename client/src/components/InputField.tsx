@@ -1,6 +1,5 @@
 import { Input } from '@chakra-ui/input';
 import { FormControl, FormErrorMessage, FormLabel } from '@chakra-ui/react';
-import { values } from 'lodash';
 import React, { InputHTMLAttributes } from 'react';
 import { useField } from 'formik';
 

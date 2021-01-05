@@ -11,6 +11,7 @@ import {
 import { MyContext } from 'src/types';
 import { User } from '../entities/User';
 import argon2 from 'argon2';
+import { EntityManager } from '@mikro-orm/postgresql';
 
 // here we're abstracting setting the ARGS ins @Arg, and then we can re-use this
 @InputType()
@@ -54,7 +55,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg('options') options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (options.username.length <= 2) {
       return {
@@ -79,13 +80,28 @@ export class UserResolver {
     }
 
     const hashedPassword = await argon2.hash(options.password);
-    const user = em.create(User, {
-      username: options.username,
-      password: hashedPassword,
-    });
+    // const user = em.create(User, {
+    //   username: options.username,
+    //   password: hashedPassword,
+    // });
+    // try {
+    //   await em.persistAndFlush(user);
+    // } catch (err) {
+    let user;
     try {
-      await em.persistAndFlush(user);
+      const result = await (em as EntityManager)
+        .createQueryBuilder(User)
+        .getKnexQuery()
+        .insert({
+          username: options.username,
+          password: hashedPassword,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning('*');
+      user = result[0];
     } catch (err) {
+      console.log(err);
       if (err.code === '23505') {
         return {
           errors: [
@@ -97,6 +113,7 @@ export class UserResolver {
         };
       }
     }
+    req.session.userId = user.id;
     return { user };
   }
 
@@ -131,7 +148,6 @@ export class UserResolver {
     // store user id sesion
     // will set a cookie on the user and keep them logged in
     req.session.userId = user.id;
-
     return { user };
   }
 }
