@@ -17,9 +17,9 @@ const Login = (props: Props) => {
   return (
     <Wrapper>
       <Formik
-        initialValues={{ username: '', password: '' }}
+        initialValues={{ usernameOrEmail: '', password: '' }}
         onSubmit={async (values, { setErrors }) => {
-          const response = await login({ options: values });
+          const response = await login(values);
           // some optional chaining here
           // will return undefined if no response.data, else return errors
           if (response.data?.login.errors) {
@@ -34,9 +34,9 @@ const Login = (props: Props) => {
           <Form>
             <Box mt={4}>
               <InputField
-                name='username'
-                placeholder='username'
-                label='Username'
+                name='usernameOrEmail'
+                placeholder='username or email'
+                label='Username Or Email'
               />
             </Box>
             <Box mt={4}>

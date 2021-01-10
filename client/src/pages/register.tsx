@@ -17,16 +17,16 @@ const Register = (props: Props) => {
   return (
     <Wrapper>
       <Formik
-        initialValues={{ username: '', password: '' }}
+        initialValues={{ email: '', username: '', password: '' }}
         onSubmit={async (values, { setErrors }) => {
-          const response = await register(values);
+          const response = await register({ options: values });
           // some optional chaining here
           // will return undefined if no response.data, else return errors
           if (response.data?.register.errors) {
             setErrors(toErrorMap(response.data.register.errors));
           } else if (response.data?.register.user) {
             // worked
-            router.push('/')
+            router.push('/');
           }
         }}
       >
@@ -37,6 +37,13 @@ const Register = (props: Props) => {
                 name='username'
                 placeholder='username'
                 label='Username'
+              />
+            </Box>
+            <Box mt={4}>
+              <InputField
+                name='email'
+                placeholder='email'
+                label='Email'
               />
             </Box>
             <Box mt={4}>
