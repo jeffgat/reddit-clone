@@ -1,35 +1,28 @@
-import { MyContext } from 'src/types';
-import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
+import { Arg, Mutation, Query, Resolver } from 'type-graphql';
 import { Post } from '../entities/Post';
 
 @Resolver()
 export class PostResolver {
   @Query(() => [Post])
-  posts(@Ctx() { em }: MyContext): Promise<Post[]> {
-    return em.find(Post, {});
+  async posts(): Promise<Post[]> {
+    return Post.find();
   }
 
   // read
   @Query(() => Post, { nullable: true })
   post(
     // arg is what the query will be called (id), typescript type follows
-    @Arg('id') id: number,
-    // context is my mikro orm shit
-    @Ctx() { em }: MyContext
-  ): Promise<Post | null> {
+    @Arg('id') id: number
+  ): Promise<Post | undefined> {
     // do stuff here
-    return em.findOne(Post, { id });
+    return Post.findOne(id);
   }
 
   // create
   @Mutation(() => Post)
-  async createPost(
-    @Arg('title') title: string,
-    @Ctx() { em }: MyContext
-  ): Promise<Post> {
-    const post = em.create(Post, { title });
-    await em.persistAndFlush(post);
-    return post;
+  async createPost(@Arg('title') title: string): Promise<Post> {
+    // 2 sql queries
+    return Post.create({ title }).save();
   }
 
   // update
@@ -39,27 +32,28 @@ export class PostResolver {
 
     // the @Arg type must be set (() => String) here to pass nullable in
     // also the @Arg type is usually inferred, but if not, just pass it in as a 2nd param to Arg
-    @Arg('title', () => String, { nullable: true }) title: string,
-    @Ctx() { em }: MyContext
+    @Arg('title', () => String, { nullable: true }) title: string
   ): Promise<Post | null> {
-    const post = await em.findOne(Post, { id });
+    // const post = await Post.findOne( where: { id })
+    // syntax above is longer form version of one below
+    const post = await Post.findOne(id);
+
     if (!post) {
       return null;
     }
+
     if (typeof title !== 'undefined') {
-      post.title = title;
-      await em.persistAndFlush(post);
+      // 2 sql queries
+      await Post.update({ id }, { title });
     }
+
     return post;
   }
 
   // delete
   @Mutation(() => Boolean)
-  async deletePost(
-    @Arg('id') id: number,
-    @Ctx() { em }: MyContext
-  ): Promise<boolean> {
-    await em.nativeDelete(Post, { id });
+  async deletePost(@Arg('id') id: number): Promise<boolean> {
+    await Post.delete(id);
     return true;
   }
 }
