@@ -13,8 +13,6 @@ const NavBar = (props: Props) => {
   });
   let body = null;
 
-  console.log('data: ', data);
-
   if (fetching) {
     
   } else if (!data?.me) {
@@ -53,7 +51,7 @@ const NavBar = (props: Props) => {
   }
 
   return (
-    <Flex bg='black' p={4}>
+    <Flex zIndex='1' position='sticky' bg='black' p={4}>
       <Box ml={'auto'}>{body}</Box>
     </Flex>
   );
