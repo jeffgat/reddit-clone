@@ -40,15 +40,8 @@ const EditPost = () => {
       <Formik
         initialValues={{ title: data.post.title, text: data.post.text }}
         onSubmit={async values => {
-          //   console.log(values);
-          //   const { error } = await createPost({ input: values });
-          //   if (error?.message.includes('not authenticated')) {
-          //     console.log(error);
-          //   } else {
-          //     router.push('/');
-          //   }
           await updatePost({ id: intId, ...values });
-          router.push('/');
+          router.back();
         }}
       >
         {({ isSubmitting }) => (

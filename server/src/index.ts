@@ -15,8 +15,10 @@ import connectRedis from 'connect-redis';
 import { MyContext } from './types';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
-import path from 'path'
+import path from 'path';
 import { Vote } from './entities/Vote';
+import { createUserLoader } from './utils/CreateUserLoader';
+import { createVoteLoader } from './utils/createVoteLoader';
 //r
 const main = async () => {
   const conn = await createConnection({
@@ -27,7 +29,7 @@ const main = async () => {
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, './migrations/*')],
-    entities: [Post, User, Vote]
+    entities: [Post, User, Vote],
   });
   await conn.runMigrations();
 
@@ -70,7 +72,13 @@ const main = async () => {
       validate: false,
     }),
     // accessible by all resolvers
-    context: ({ req, res }): MyContext => ({ req, res, redis }),
+    context: ({ req, res }): MyContext => ({
+      req,
+      res,
+      redis,
+      userLoader: createUserLoader(),
+      voteLoader: createVoteLoader()
+    }),
   });
 
   apolloServer.applyMiddleware({
