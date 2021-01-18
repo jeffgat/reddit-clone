@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Vote } from './Vote';
 import { User } from './User';
 
 @ObjectType()
@@ -29,10 +31,18 @@ export class Post extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   points!: number;
 
+  @OneToMany(() => Vote, vote => vote.post)
+  votes: Vote[];
+
+  // graphql schema value, isn't in the DB and is resolved in resolvers
+  @Field(() => Int, { nullable: true })
+  voteStatus: number | null; // 1, -1, or null
+
   @Field()
   @Column()
   creatorId: number;
 
+  @Field()
   @ManyToOne(() => User, user => user.posts)
   creator: User;
 

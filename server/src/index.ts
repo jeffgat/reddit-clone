@@ -16,6 +16,7 @@ import { MyContext } from './types';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
 import path from 'path'
+import { Vote } from './entities/Vote';
 //r
 const main = async () => {
   const conn = await createConnection({
@@ -26,7 +27,7 @@ const main = async () => {
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, './migrations/*')],
-    entities: [Post, User]
+    entities: [Post, User, Vote]
   });
   await conn.runMigrations();
 
@@ -43,6 +44,7 @@ const main = async () => {
     })
   );
   app.use(
+    // stuff is tied to this cookie here, am passing it to the nextjs server in createUrqlClient, which is then passed to the graphql api
     session({
       name: COOKIE_NAME,
       store: new RedisStore({

@@ -28,6 +28,7 @@ const connect_redis_1 = __importDefault(require("connect-redis"));
 const User_1 = require("./entities/User");
 const Post_1 = require("./entities/Post");
 const path_1 = __importDefault(require("path"));
+const Vote_1 = require("./entities/Vote");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const conn = yield typeorm_1.createConnection({
         type: 'postgres',
@@ -37,7 +38,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         logging: true,
         synchronize: true,
         migrations: [path_1.default.join(__dirname, './migrations/*')],
-        entities: [Post_1.Post, User_1.User]
+        entities: [Post_1.Post, User_1.User, Vote_1.Vote]
     });
     yield conn.runMigrations();
     const app = express_1.default();

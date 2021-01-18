@@ -3,7 +3,11 @@ import { withUrqlClient } from 'next-urql';
 import NextLink from 'next/link';
 
 import { createUrqlClient } from '../utils/createUrqlClient';
-import { usePostsQuery } from '../generated/graphql';
+import {
+  useDeletePostMutation,
+  useMeQuery,
+  usePostsQuery,
+} from '../generated/graphql';
 import Layout from '../components/Layout';
 import {
   Box,
@@ -13,17 +17,22 @@ import {
   Link,
   Stack,
   Text,
+  IconButton,
 } from '@chakra-ui/react';
-import { AddIcon } from '@chakra-ui/icons';
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
+import VoteSection from '../components/VoteSection';
 
 const Index = () => {
   const [variables, setVariables] = useState({
-    limit: 40,
+    limit: 15,
     cursor: null as null | string,
   });
-  const [{ data, fetching, ...other }] = usePostsQuery({
+  const [{ data: meData }] = useMeQuery();
+  const [{ data, fetching }] = usePostsQuery({
     variables,
   });
+
+  const [, deletePost] = useDeletePostMutation();
 
   if (!fetching && !data) {
     return <div>query failed bud</div>;
@@ -31,31 +40,60 @@ const Index = () => {
 
   return (
     <Layout>
-      <Flex align='center'>
-        <Heading>Reddit 2</Heading>
-        <NextLink href='/create-post'>
-          <Link fontWeight='medium' color='blue.700' ml='auto'>
-            <AddIcon w={3} h={3} mr={2} />
-            Create Post
-          </Link>
-        </NextLink>
-      </Flex>
-      <br />
       {!data && fetching ? (
         <div>loading</div>
       ) : (
         <Stack spacing={8}>
-          {data!.posts.posts.map(p => (
-            <Box key={p.id} p={4} shadow='sm' borderWidth='1px'>
-              <Heading fontSize='xl'>{p.title}</Heading>
-              <Text mt={4}>{`${p.textSnippet}...`}</Text>
-            </Box>
-          ))}
+          {/* the ternary IF NULL here is because cache.invalidate (createUrqlClient) makes posts null */}
+          {data!.posts.posts.map(p =>
+            !p ? null : (
+              <Flex key={p.id} p={4} shadow='sm' borderWidth='1px'>
+                <VoteSection post={p} />
+                <Box flex={1}>
+                  <NextLink href='/post/[id]' as={`/post/${p.id}`}>
+                    <Link>
+                      <Heading fontSize='xl'>{p.title}</Heading>
+                    </Link>
+                  </NextLink>
+                  <Text fontSize='sm' mt={1}>
+                    Posted by {p.creator.username}
+                  </Text>
+                  <Flex align='center'>
+                    <Text flex={1} mt={2}>{`${p.textSnippet}...`}</Text>
+                    {meData?.me?.id !== p.creator.id ? null : (<Box ml='auto'>
+                      <NextLink
+                        href='/post/edit/[id]'
+                        as={`/post/edit/${p.id}`}
+                      >
+                        <IconButton
+                          mr={2}
+                          icon={<EditIcon />}
+                          aria-label='Edit post'
+                          size='sm'
+                          onClick={() => {
+                            deletePost({ id: p.id });
+                          }}
+                        />
+                      </NextLink>
+                      <IconButton
+                        icon={<DeleteIcon />}
+                        aria-label='Delete post'
+                        size='sm'
+                        onClick={() => {
+                          deletePost({ id: p.id });
+                        }}
+                      />
+                    </Box>)}
+                  </Flex>
+                </Box>
+              </Flex>
+            )
+          )}
         </Stack>
       )}
       {data && data.posts.hasMore ? (
         <Flex>
-          <Button 
+          <Button
             onClick={() => {
               setVariables({
                 limit: variables.limit,

@@ -21,7 +21,6 @@ const CreatePost = () => {
         onSubmit={async values => {
           console.log(values);
           const { error } = await createPost({ input: values });
-          createPost({ input: values });
 
           if (error?.message.includes('not authenticated')) {
             console.log(error);
