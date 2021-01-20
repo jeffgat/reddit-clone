@@ -130,6 +130,8 @@ export class UserResolver {
       1000 * 60 * 60 * 3 // 3days
     );
 
+
+    // would need to set up a real email here, also put this into env vars
     await sendEmail(
       email,
       `<a href="http://localhost:3000/change-password/${token}">reset password</a>`

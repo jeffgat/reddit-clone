@@ -1,4 +1,5 @@
 import 'reflect-metadata'; // required for typeorm and graphql
+import 'dotenv-safe/config';
 import { COOKIE_NAME, __prod__ } from './constants';
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
@@ -17,17 +18,15 @@ import { User } from './entities/User';
 import { Post } from './entities/Post';
 import path from 'path';
 import { Vote } from './entities/Vote';
-import { createUserLoader } from './utils/CreateUserLoader';
+import { createUserLoader } from './utils/createUserLoader';
 import { createVoteLoader } from './utils/createVoteLoader';
 //r
 const main = async () => {
   const conn = await createConnection({
     type: 'postgres',
-    database: 'reddit-clone',
-    username: 'postgres',
-    password: 'postgres',
+    url: process.env.DATABASE_URL,
     logging: true,
-    synchronize: true,
+    // synchronize: true, // don't want this to be true in prod
     migrations: [path.join(__dirname, './migrations/*')],
     entities: [Post, User, Vote],
   });
@@ -38,10 +37,13 @@ const main = async () => {
   const app = express();
 
   const RedisStore = connectRedis(session);
-  const redis = new Redis();
+  const redis = new Redis(process.env.REDIS_URL);
+  // need to tell express we have a proxy sitting in front
+  // this way cookies and sessions work
+  app.set('trust proxy', 1)
   app.use(
     cors({
-      origin: 'http://localhost:3000',
+      origin: process.env.CORS_ORIGIN,
       credentials: true,
     })
   );
@@ -58,9 +60,10 @@ const main = async () => {
         httpOnly: true, // can't access cookie in front-end
         sameSite: 'lax', // csrf
         secure: __prod__, // cookie only works in https
+        domain: __prod__ ? '.jeff-apps.com' : undefined
       },
       saveUninitialized: false,
-      secret: 'randomsecretkey',
+      secret: process.env.SESSION_SECRET,
       resave: false,
     })
   );
@@ -77,7 +80,7 @@ const main = async () => {
       res,
       redis,
       userLoader: createUserLoader(),
-      voteLoader: createVoteLoader()
+      voteLoader: createVoteLoader(),
     }),
   });
 
@@ -96,8 +99,8 @@ const main = async () => {
   // await orm.em.persistAndFlush(post);
   // const posts = await orm.em.find(Post, {});
 
-  app.listen(4000, () => {
-    console.log('server started on local host 4000');
+  app.listen(parseInt(process.env.PORT), () => {
+    console.log('server started on localhost:4000');
   });
 };
 

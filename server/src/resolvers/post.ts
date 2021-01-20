@@ -17,7 +17,6 @@ import {
 import { getConnection } from 'typeorm';
 import { Post } from '../entities/Post';
 import { Vote } from '../entities/Vote';
-import { User } from '../entities/User';
 
 @InputType()
 class PostInput {

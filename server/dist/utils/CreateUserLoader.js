@@ -24,4 +24,4 @@ const createUserLoader = () => new dataloader_1.default((userIds) => __awaiter(v
     return userIds.map(userId => userIdToUser[userId]);
 }));
 exports.createUserLoader = createUserLoader;
-//# sourceMappingURL=CreateUserLoader.js.map
+//# sourceMappingURL=createUserLoader.js.map

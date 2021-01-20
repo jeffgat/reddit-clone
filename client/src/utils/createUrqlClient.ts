@@ -1,6 +1,6 @@
 import Router from 'next/router';
 import { dedupExchange, fetchExchange, Exchange, gql } from 'urql';
-import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
+import { cacheExchange, Resolver, Cache } from '@urql/exchange-graphcache';
 import { stringifyVariables } from '@urql/core';
 import {
   LogoutMutation,
@@ -8,9 +8,7 @@ import {
   MeDocument,
   LoginMutation,
   RegisterMutation,
-  VoteMutation,
   VoteMutationVariables,
-  DeletePostMutation,
   DeletePostMutationVariables,
 } from '../generated/graphql';
 import { betterUpdateQuery } from './betterUpdateQuery';
@@ -72,6 +70,8 @@ export const cursorPagination = (): Resolver => {
       hasMore,
       posts: results,
     };
+    // non cursor pagination (offset pagination)
+    // ==================================================
     // const visited = new Set();
     // let result: NullArray<string> = [];
     // let prevOffset: number | null = null;
@@ -126,13 +126,22 @@ export const cursorPagination = (): Resolver => {
   };
 };
 
+// reloads cache for current posts data
+function invalidateAllPosts(cache: Cache) {
+  const allFields = cache.inspectFields('Query');
+  const fieldInfos = allFields.filter(info => info.fieldName === 'posts');
+  fieldInfos.forEach(fi => {
+    cache.invalidate('Query', 'posts', fi.arguments || {});
+  });
+}
+
 export const createUrqlClient = (ssrExchange: any, ctx: any) => {
   let cookie = '';
   if (isServer()) {
     cookie = ctx?.req.headers?.cookie;
   }
   return {
-    url: 'http://localhost:4000/graphql',
+    url: process.env.NEXT_PUBLIC_API_URL as string,
     fetchOptions: {
       credentials: 'include' as const,
       headers: cookie
@@ -196,13 +205,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
             },
             // invalidating cache here so that we can re-query the server and get the most recent updates (posts)
             createPost: (_result, args, cache, info) => {
-              const allFields = cache.inspectFields('Query');
-              const fieldInfos = allFields.filter(
-                info => info.fieldName === 'posts'
-              );
-              fieldInfos.forEach(fi => {
-                cache.invalidate('Query', 'posts', fi.arguments || {});
-              });
+              invalidateAllPosts(cache);
             },
             logout: (_result, args, cache, info) => {
               betterUpdateQuery<LogoutMutation, MeQuery>(
@@ -227,6 +230,8 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                   }
                 }
               );
+              // reloads cache on login
+              invalidateAllPosts(cache);
             },
             register: (_result, args, cache, info) => {
               betterUpdateQuery<RegisterMutation, MeQuery>(

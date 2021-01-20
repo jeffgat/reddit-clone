@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { NextPage } from 'next';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { withUrqlClient } from 'next-urql';

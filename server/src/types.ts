@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Redis } from 'ioredis';
-import { createUserLoader } from './utils/CreateUserLoader';
+import { createUserLoader } from './utils/createUserLoader';
 import { createVoteLoader } from './utils/createVoteLoader';
 
 export type MyContext = {
